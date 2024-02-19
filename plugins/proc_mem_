@@ -1,0 +1,29 @@
+#!/bin/sh
+
+: << =cut
+
+=head1 NAME
+
+Process memory - Plugin to measure process memory usage.
+
+=cut
+
+process=${0##*/proc_mem_}
+
+if [ "$1" = "autoconf" ]; then
+        echo yes
+        exit 0
+fi
+
+if [ "$1" = "config" ]; then
+
+        printf "graph_title %s Memory Usage\n" $process
+        echo 'graph_vlabel Bytes'
+        echo 'graph_args --base 1024 -l 0'
+        echo 'graph_category proc_memory'
+        echo 'mem.label memory'
+        echo 'mem.draw AREA'
+        exit 0
+fi
+
+ps aux | grep -i $process | grep -v grep | awk '{sum+=$6} END {printf("mem.value %d\n", sum * 1024)}'
