@@ -22,6 +22,7 @@ get_memory_usage()
   ;;
   *)
     echo '0'
+    return
   esac
   for pid in $pids
   do
