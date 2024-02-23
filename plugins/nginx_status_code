@@ -11,8 +11,30 @@ Nginx status code - Plugin to measure nginx status code
 get_http_status()
 {
   log_file=${1:-"/var/log/nginx/access.log"}
-  lines=${2:-"100000"}
-  tail -"$lines" "$log_file" | grep -ioE "HTTP\/[1|2]\.[1|0]\"[[:blank:]][0-9]{3}" | awk '{print $2}' | sort | uniq -c
+  max_lines=${2:-"100000"}
+  step_file=${3:-"/dev/shm/nginx_status_code_step"}
+
+  # 23/Feb/2024:10:54:27 获得最新一条日志的时间
+  now=$(tail -1 /var/log/nginx/access.log | grep -ioE "[0-9]{2}\/[a-z]{3}\/[0-9]{4}:[0-9]{2}:[0-9]{2}:[0-9]{2}")
+  # 23/Feb/2024:10:54:27 获得10万之前的一条日志的时间，看这段时间之间是否超过了10万条，实际上 last_ml - now 之间不足10万条
+  last_ml=$(tail -"$max_lines" "$log_file" | head -1 | grep -ioE "[0-9]{2}\/[a-z]{3}\/[0-9]{4}:[0-9]{2}:[0-9]{2}:[0-9]{2}")
+
+  # 找不到文件，直接统计10万
+  if [ ! -f "$step_file" ]; then
+    tail -"$max_lines" "$log_file" | grep -ioE "HTTP\/[1|2]\.[1|0]\"[[:blank:]][0-9]{3}" | awk '{print $2}' | sort | uniq -c
+    echo "$now" > "$step_file"
+    return
+  fi
+
+  last=$(cat "$step_file")
+
+  #取上条日志或max_line的第一条日志
+  if [ "$(date -d "$(echo "$last" | sed -e 's,/,-,g' -e 's,:, ,')" +"%s")" -lt "$(date -d "$(echo "$last_ml" | sed -e 's,/,-,g' -e 's,:, ,')" +"%s")" ]; then
+    last="$last_ml"
+  fi
+
+  tail -"$max_lines" "$log_file" | sed -n /"$(echo "$last" | sed -e 's/\//\\\//g')"/,/"$(echo "$now" | sed -e 's/\//\\\//g')"/p | grep -ioE "HTTP\/[1|2]\.[1|0]\"[[:blank:]][0-9]{3}" | awk '{print $2}' | sort | uniq -c
+  echo "$now" > "$step_file"
 }
 
 if [ "$1" = "autoconf" ]; then
@@ -55,6 +77,9 @@ get_http_status "$@" | awk 'BEGIN{
   }
 }END{
   t=i+j+k+l+m;
+  if(t==0){
+    t=1
+  }
   printf("s100.value %.2f\n", i * 100/t);
   printf("s200.value %.2f\n", j * 100/t);
   printf("s300.value %.2f\n", k * 100/t);
