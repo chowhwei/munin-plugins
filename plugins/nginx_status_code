@@ -32,6 +32,7 @@ get_http_status()
     last="$last_ml"
   fi
 
+  # 如果从 now 到现在增加的日志超过5万条，会断开
   tail -150000 "$log_file" | sed -n /"$(echo "$last" | sed -e 's/\//\\\//g')"/,/"$(echo "$now" | sed -e 's/\//\\\//g')"/p | grep -ioE "HTTP\/[1|2]\.[1|0]\"[[:blank:]][0-9]{3}" | awk '{print $2}' | sort | uniq -c
   echo "$now" > "$step_file"
 }
