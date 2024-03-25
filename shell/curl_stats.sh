@@ -1,0 +1,3 @@
+#! /bin/bash
+
+curl -L --output /dev/null --write-out "http_code:%{http_code}\nhttp_connect:%{http_connect}\ntime_total:%{time_total}\ntime_namelookup:%{time_namelookup}\ntime_connect:%{time_connect}\ntime_appconnect:%{time_appconnect}\ntime_pretransfer:%{time_pretransfer}\ntime_redirect:%{time_redirect}\ntime_starttransfer:%{time_starttransfer}\nsize_download:%{size_download}\nsize_upload:%{size_upload}\nsize_header:%{size_header}\nsize_request:%{size_request}\nspeed_download:%{speed_download}\nspeed_upload:%{speed_upload}\ncontent_type:%{content_type}\nnum_connects:%{num_connects}\nnum_redirects:%{num_redirects}\n" --silent $1
