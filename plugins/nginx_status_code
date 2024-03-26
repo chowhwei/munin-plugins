@@ -45,7 +45,7 @@ fi
 
 if [ "$1" = "config" ]; then
         echo "graph_title Nginx status code"
-        echo 'graph_vlabel % (v2.0.240326)'
+        echo 'graph_vlabel % (v2.1.240326)'
         echo 'graph_args --upper-limit 100 -l 0'
         echo 'graph_category nginx-status-code'
         echo 's1XX.label 1XX'
@@ -62,6 +62,8 @@ if [ "$1" = "config" ]; then
         echo 's304.draw STACK'
         echo 's3XX.label 3XX'
         echo 's3XX.draw STACK'
+        echo 's401.label 401 Unauthorized'
+        echo 's401.draw STACK'
         echo 's403.label 403 Forbidden'
         echo 's403.draw STACK'
         echo 's404.label 404 Not Found'
@@ -84,7 +86,7 @@ if [ "$1" = "config" ]; then
 fi
 
 get_http_status "$@" | awk 'BEGIN{
-  r1xx=r200=r2xx=r301=r302=r304=r3xx=r403=r404=r429=r4xx=r500=r502=r504=r5xx=rxxx=total=0;
+  r1xx=r200=r2xx=r301=r302=r304=r3xx=r401=r403=r404=r429=r4xx=r500=r502=r504=r5xx=rxxx=total=0;
 }
 {
   total+=$1
@@ -107,7 +109,9 @@ get_http_status "$@" | awk 'BEGIN{
       r3xx+=$1
     }
   }else if($2 >= 400 && $2 < 500){
-    if($2 == 403){
+    if($2 == 401){
+      r401+=$1
+    }else if($2 == 403){
       r403+=$1
     }else if($2 == 404){
       r404+=$1
@@ -140,6 +144,7 @@ get_http_status "$@" | awk 'BEGIN{
   printf("s302.value %.2f\n", r302 * 100/total);
   printf("s304.value %.2f\n", r304 * 100/total);
   printf("s3XX.value %.2f\n", r3xx * 100/total);
+  printf("s401.value %.2f\n", r401 * 100/total);
   printf("s403.value %.2f\n", r403 * 100/total);
   printf("s404.value %.2f\n", r404 * 100/total);
   printf("s429.value %.2f\n", r429 * 100/total);
