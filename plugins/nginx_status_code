@@ -45,45 +45,108 @@ fi
 
 if [ "$1" = "config" ]; then
         echo "graph_title Nginx status code"
-        echo 'graph_vlabel % (v1.1.240325)'
+        echo 'graph_vlabel % (v2.0.240326)'
         echo 'graph_args --upper-limit 100 -l 0'
         echo 'graph_category nginx-status-code'
-        echo 's100.label 1XX'
-        echo 's100.draw AREA'
-        echo 's200.label 2XX'
+        echo 's1XX.label 1XX'
+        echo 's1XX.draw AREA'
+        echo 's200.label 200 OK'
         echo 's200.draw STACK'
-        echo 's300.label 3XX'
-        echo 's300.draw STACK'
-        echo 's400.label 4XX'
-        echo 's400.draw STACK'
-        echo 's500.label 5XX'
+        echo 's2XX.label 2XX'
+        echo 's2XX.draw STACK'
+        echo 's301.label 301 Moved Permanently'
+        echo 's301.draw STACK'
+        echo 's302.label 302 Found'
+        echo 's302.draw STACK'
+        echo 's304.label 304 Not Modified'
+        echo 's304.draw STACK'
+        echo 's3XX.label 3XX'
+        echo 's3XX.draw STACK'
+        echo 's403.label 403 Forbidden'
+        echo 's403.draw STACK'
+        echo 's404.label 404 Not Found'
+        echo 's404.draw STACK'
+        echo 's429.label 429 Too Many Requests'
+        echo 's429.draw STACK'
+        echo 's4XX.label 4XX'
+        echo 's4XX.draw STACK'
+        echo 's500.label 500 Internal Server Error'
         echo 's500.draw STACK'
+        echo 's502.label 502 Bad Gateway'
+        echo 's502.draw STACK'
+        echo 's504.label 504 Gateway Timeout'
+        echo 's504.draw STACK'
+        echo 's5XX.label 5XX'
+        echo 's5XX.draw STACK'
+        echo 'sXXX.label XXX'
+        echo 'sXXX.draw STACK'
         exit 0
 fi
 
 get_http_status "$@" | awk 'BEGIN{
-  i=j=k=l=m=0;
+  r1xx=r200=r2xx=r301=r302=r304=r3xx=r403=r404=r429=r4xx=r500=r502=r504=r5xx=rxxx=total=0;
 }
 {
+  total+=$1
   if($2 >= 100 && $2 < 200){
-    i+=$1
+    r1xx+=$1
   }else if($2 >= 200 && $2 < 300){
-    j+=$1
+    if($2 == 200){
+      r200+=$1
+    }else{
+      r2xx+=$1
+    }
   }else if($2 >= 300 && $2 < 400){
-    k+=$1
+    if($2 == 301){
+      r301+=$1
+    }else if($2 == 302){
+      r302+=$1
+    }else if($2 == 304){
+      r304+=$1
+    }else{
+      r3xx+=$1
+    }
   }else if($2 >= 400 && $2 < 500){
-    l+=$1
+    if($2 == 403){
+      r403+=$1
+    }else if($2 == 404){
+      r404+=$1
+    }else if($2 == 429){
+      r429+=$1
+    }else{
+      r4xx+=$1
+    }
   }else if($2 >= 500){
-    m+=$1
+    if($2 == 500){
+      r500+=$1
+    }else if($2 == 502){
+      r502+=$1
+    }else if($2 == 504){
+      r504+=$1
+    }else{
+      r5xx+=$1
+    }
+  }else{
+    rxxx+=$1
   }
 }END{
-  t=i+j+k+l+m;
-  if(t==0){
-    t=1
+  if(total==0){
+    total=1
   }
-  printf("s100.value %.2f\n", i * 100/t);
-  printf("s200.value %.2f\n", j * 100/t);
-  printf("s300.value %.2f\n", k * 100/t);
-  printf("s400.value %.2f\n", l * 100/t);
-  printf("s500.value %.2f\n", m * 100/t);
+  printf("s1XX.value %.2f\n", r1xx * 100/total);
+  printf("s200.value %.2f\n", r200 * 100/total);
+  printf("s2XX.value %.2f\n", r2xx * 100/total);
+  printf("s301.value %.2f\n", r301 * 100/total);
+  printf("s302.value %.2f\n", r302 * 100/total);
+  printf("s304.value %.2f\n", r304 * 100/total);
+  printf("s3XX.value %.2f\n", r3xx * 100/total);
+  printf("s403.value %.2f\n", r403 * 100/total);
+  printf("s404.value %.2f\n", r404 * 100/total);
+  printf("s429.value %.2f\n", r429 * 100/total);
+  printf("s4XX.value %.2f\n", r4xx * 100/total);
+  printf("s500.value %.2f\n", r500 * 100/total);
+  printf("s502.value %.2f\n", r502 * 100/total);
+  printf("s504.value %.2f\n", r504 * 100/total);
+  printf("s5XX.value %.2f\n", r5xx * 100/total);
+  printf("sXXX.value %.2f\n", rxxx * 100/total);
 }'
